@@ -1,6 +1,6 @@
 import streamlit as st
 import os
-from google import genai
+import google.generativeai as genai
 from dotenv import load_dotenv
 from datetime import datetime
 import pytz
