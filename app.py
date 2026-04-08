@@ -1,20 +1,19 @@
 import streamlit as st
 import os
 import google.generativeai as genai
-from dotenv import load_dotenv
 from datetime import datetime
 import pytz
 import time
 
 # ========== CONFIG ==========
-load_dotenv()
-api_key = os.getenv("GEMINI_API_KEY")
+# Works for both local (.env) and Streamlit Cloud (Secrets)
+api_key = os.getenv("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY")
 
 if not api_key:
-    st.error("❌ GEMINI_API_KEY missing in .env")
+    st.error("❌ API key not found. Please add it in Streamlit Secrets.")
     st.stop()
 
-client = genai.Client(api_key=api_key)
+genai.configure(api_key=api_key)
 
 st.set_page_config(page_title="AI Conversational Assistant", page_icon="🤖", layout="wide")
 
@@ -119,15 +118,12 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # ========== AI FUNCTION ==========
 def generate_reply(prompt):
-    models = ["gemini-2.5-flash", "gemini-1.5-flash"]
+    models = ["gemini-1.5-flash"]
 
     for model in models:
         for _ in range(2):
             try:
-                response = client.models.generate_content(
-                    model=model,
-                    contents=prompt
-                )
+                response = genai.GenerativeModel(model).generate_content(prompt)
                 if response.text:
                     return response.text
 
@@ -139,8 +135,6 @@ def generate_reply(prompt):
                     continue
                 elif "429" in err:
                     return "⚠️ API limit reached. Please try later."
-                elif "404" in err:
-                    break
                 else:
                     return f"⚠️ Error: {err}"
 
@@ -156,7 +150,7 @@ if prompt:
     now = datetime.now(ist)
     text = prompt.lower()
 
-    # ✅ Only useful local responses
+    # Local responses
     if "date" in text:
         reply = f"📅 {now.strftime('%A, %d %B %Y')}"
 
@@ -164,7 +158,6 @@ if prompt:
         reply = f"⏰ {now.strftime('%I:%M %p IST')}"
 
     else:
-        # 🤖 AI handles everything else
         reply = generate_reply(prompt)
 
     st.session_state.messages.append({"role": "bot", "content": reply})
