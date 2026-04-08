@@ -6,7 +6,7 @@ import pytz
 import time
 
 # ========== CONFIG ==========
-# Works for both local (.env) and Streamlit Cloud (Secrets)
+# Load API key (works for Streamlit Cloud + local)
 api_key = os.getenv("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY")
 
 if not api_key:
@@ -118,27 +118,17 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # ========== AI FUNCTION ==========
 def generate_reply(prompt):
-    models = ["gemini-1.5-flash"]
+    try:
+        model = genai.GenerativeModel("gemini-1.5-flash-latest")
+        response = model.generate_content(prompt)
 
-    for model in models:
-        for _ in range(2):
-            try:
-                response = genai.GenerativeModel(model).generate_content(prompt)
-                if response.text:
-                    return response.text
+        if response.text:
+            return response.text
+        else:
+            return "⚠️ No response generated."
 
-            except Exception as e:
-                err = str(e)
-
-                if "503" in err:
-                    time.sleep(1)
-                    continue
-                elif "429" in err:
-                    return "⚠️ API limit reached. Please try later."
-                else:
-                    return f"⚠️ Error: {err}"
-
-    return "⚠️ Server busy. Try again later."
+    except Exception as e:
+        return f"⚠️ Error: {str(e)}"
 
 # ========== INPUT ==========
 prompt = st.chat_input("Ask anything...")
