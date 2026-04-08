@@ -3,14 +3,13 @@ import os
 import google.generativeai as genai
 from datetime import datetime
 import pytz
-import time
 
 # ========== CONFIG ==========
-# Load API key (works for Streamlit Cloud + local)
+# Load API key (Streamlit Secrets + local fallback)
 api_key = os.getenv("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY")
 
 if not api_key:
-    st.error("❌ API key not found. Please add it in Streamlit Secrets.")
+    st.error("❌ API key not found. Add it in Streamlit Secrets.")
     st.stop()
 
 genai.configure(api_key=api_key)
@@ -56,7 +55,6 @@ body {
     margin: 10px 0;
     border-radius: 20px;
     max-width: 75%;
-    animation: fadeIn 0.4s ease;
 }
 
 .user {
@@ -84,11 +82,6 @@ body {
 
 [data-testid="stChatInput"] textarea {
     color: #000 !important;
-}
-
-@keyframes fadeIn {
-    from {opacity:0; transform: translateY(10px);}
-    to {opacity:1; transform: translateY(0);}
 }
 </style>
 """, unsafe_allow_html=True)
@@ -119,7 +112,7 @@ st.markdown('</div>', unsafe_allow_html=True)
 # ========== AI FUNCTION ==========
 def generate_reply(prompt):
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash-latest")
+        model = genai.GenerativeModel("gemini-1.5-flash")
         response = model.generate_content(prompt)
 
         if response.text:
@@ -143,10 +136,8 @@ if prompt:
     # Local responses
     if "date" in text:
         reply = f"📅 {now.strftime('%A, %d %B %Y')}"
-
     elif "time" in text:
         reply = f"⏰ {now.strftime('%I:%M %p IST')}"
-
     else:
         reply = generate_reply(prompt)
 
