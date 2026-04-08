@@ -5,7 +5,6 @@ from datetime import datetime
 import pytz
 
 # ========== CONFIG ==========
-# Load API key (Streamlit Secrets + local fallback)
 api_key = os.getenv("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY")
 
 if not api_key:
@@ -44,12 +43,6 @@ body {
 }
 .header p { color: #aaa; }
 
-.chat-box {
-    max-height: 70vh;
-    overflow-y: auto;
-    padding: 10px;
-}
-
 .msg {
     padding: 14px 18px;
     margin: 10px 0;
@@ -68,21 +61,6 @@ body {
     background: rgba(255,255,255,0.08);
     border: 1px solid rgba(255,255,255,0.1);
 }
-
-[data-testid="stChatInput"] {
-    position: fixed;
-    bottom: 15px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60%;
-    background: #fff;
-    border-radius: 20px;
-    padding: 10px;
-}
-
-[data-testid="stChatInput"] textarea {
-    color: #000 !important;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -99,20 +77,16 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # ========== DISPLAY ==========
-st.markdown('<div class="chat-box">', unsafe_allow_html=True)
-
 for msg in st.session_state.messages:
     if msg["role"] == "user":
         st.markdown(f'<div class="msg user">{msg["content"]}</div>', unsafe_allow_html=True)
     else:
         st.markdown(f'<div class="msg bot">{msg["content"]}</div>', unsafe_allow_html=True)
 
-st.markdown('</div>', unsafe_allow_html=True)
-
 # ========== AI FUNCTION ==========
 def generate_reply(prompt):
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-pro")  # ✅ stable model
         response = model.generate_content(prompt)
 
         if response.text:
@@ -133,7 +107,6 @@ if prompt:
     now = datetime.now(ist)
     text = prompt.lower()
 
-    # Local responses
     if "date" in text:
         reply = f"📅 {now.strftime('%A, %d %B %Y')}"
     elif "time" in text:
